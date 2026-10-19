@@ -1,0 +1,20 @@
+$color-bg: #f6f7f9;
+$color-surface: #ffffff;
+$color-text: #1d2330;
+$color-muted: #5b6475;
+$color-primary: #1f5fbf;
+$color-danger: #b42318;
+$radius: 8px;
+$space: 16px;
+
+$status-colors: (
+  received: #475467,
+  in_analysis: #1f5fbf,
+  completed: #067647,
+  rejected: #b42318,
+);
+
+@mixin focus-ring {
+  outline: 3px solid rgba($color-primary, 0.4);
+  outline-offset: 2px;
+}

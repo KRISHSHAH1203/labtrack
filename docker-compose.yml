@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: labtrack
+      POSTGRES_USER: labtrack
+      POSTGRES_PASSWORD: labtrack
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "labtrack"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://labtrack:labtrack@postgres:5432/labtrack
+      OTEL_TRACES_EXPORTER: console
+    ports: ["3000:3000"]
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9090:9090"]

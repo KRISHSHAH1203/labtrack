@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Server unit and API tests
+        working-directory: server
+        run: npm ci && npm test && npm run build
+      - name: Web tests and build
+        working-directory: web
+        run: npm ci && npm test && npm run build
+      - name: Dependency audit (DevSecOps)
+        run: |
+          (cd server && npm audit --omit=dev --audit-level=high)
+          (cd web && npm audit --omit=dev --audit-level=high)
+      - name: End-to-end tests
+        working-directory: e2e
+        run: npm ci && npx playwright install --with-deps chromium && npx playwright test
+      - name: Build Docker image
+        run: docker build -t labtrack:${{ github.sha }} .

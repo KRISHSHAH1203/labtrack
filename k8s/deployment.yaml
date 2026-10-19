@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: labtrack
+  labels: { app: labtrack }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: labtrack }
+  template:
+    metadata:
+      labels: { app: labtrack }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: /metrics
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: labtrack
+          image: ghcr.io/krishshah1203/labtrack:latest
+          ports: [{ containerPort: 3000 }]
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: labtrack-db, key: url } }
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector:4318
+          readinessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: labtrack
+spec:
+  selector: { app: labtrack }
+  ports: [{ port: 80, targetPort: 3000 }]
